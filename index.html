@@ -241,7 +241,7 @@
     </div>
     <div class="header-btns">
       <button class="btn btn-blue" onclick="openTicketModal()">+ Add Ticket</button>
-      <button class="btn btn-green" onclick="loadData()" id="rbtn">&#8635; Refresh</button>
+      <button class="btn btn-green" onclick="loadData()" id="rbtn">↻ Refresh</button>
       <button class="btn btn-muted" onclick="logout()">Sign Out</button>
     </div>
   </header>
@@ -439,7 +439,7 @@ async function loadData(){
     document.getElementById('loading').style.display='none';
     document.getElementById('content').style.display='block';
   }
-  btn.style.opacity='1';btn.innerText='&#8635; Refresh';
+  btn.style.opacity='1';btn.innerText='↻ Refresh';
 }
 
 function refreshUI(){
