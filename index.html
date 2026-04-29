@@ -503,7 +503,9 @@ function renderAll() { renderStats(); renderUnassigned(); renderTable(); }
 
 function renderStats() {
   const c = { 'New':0, 'In Progress':0, 'Waiting for Spare Parts':0, 'Closed':0 };
-  tickets.forEach(t => { if (c[t.status] !== undefined) c[t.status]++; });
+  // Engineers see stats for their own tickets only
+  const relevant = me.role === 'manager' ? tickets : tickets.filter(t => t.assigned === me.name);
+  relevant.forEach(t => { if (c[t.status] !== undefined) c[t.status]++; });
   document.getElementById('st-new').textContent = c['New'];
   document.getElementById('st-ip').textContent  = c['In Progress'];
   document.getElementById('st-wp').textContent  = c['Waiting for Spare Parts'];
@@ -511,8 +513,12 @@ function renderStats() {
 }
 
 function renderUnassigned() {
-  const unas = tickets.filter(t => !t.assigned || !t.assigned.trim());
-  const sec  = document.getElementById('unassigned-section');
+  let unas = tickets.filter(t => !t.assigned || !t.assigned.trim());
+  // Engineers only see Equipment/Dental tickets to claim — IT tickets are manager's job
+  if (me.role === 'engineer') {
+    unas = unas.filter(t => !t.ticketType.toLowerCase().includes('computer') && !t.ticketType.toLowerCase().includes('it)'));
+  }
+  const sec = document.getElementById('unassigned-section');
   if (unas.length === 0) { sec.style.display = 'none'; return; }
   sec.style.display = '';
 
@@ -544,6 +550,10 @@ function renderTable() {
     [t.clinic, t.device, t.loc, t.contact, t.desc].some(s => s.toLowerCase().includes(q))
   );
   if (me.role === 'engineer') rows = rows.filter(t => t.assigned === me.name);
+
+  // Update section title based on role
+  document.querySelector('#view-table .sec-title').textContent =
+    me.role === 'manager' ? 'All Assigned Tickets' : 'My Tickets';
 
   const tb = document.getElementById('tickets-body');
   if (rows.length === 0) {
@@ -801,9 +811,12 @@ function renderCharts() {
     }
   };
 
+  // Scope tickets to role
+  const chartTickets = me.role === 'manager' ? tickets : tickets.filter(t => t.assigned === me.name);
+
   // Status doughnut
   const sc2 = {};
-  tickets.forEach(t => sc2[t.status] = (sc2[t.status]||0)+1);
+  chartTickets.forEach(t => sc2[t.status] = (sc2[t.status]||0)+1);
   kc('ch-status');
   CH['ch-status'] = new Chart(document.getElementById('ch-status'), {
     type: 'doughnut',
@@ -813,7 +826,7 @@ function renderCharts() {
 
   // Engineer bar
   const ec = {};
-  tickets.forEach(t => { const k = t.assigned && t.assigned.trim() ? t.assigned : 'Unassigned'; if(k !== 'Mohamed Agha') ec[k]=(ec[k]||0)+1; });
+  chartTickets.forEach(t => { const k = t.assigned && t.assigned.trim() ? t.assigned : 'Unassigned'; if(k !== 'Mohamed Agha') ec[k]=(ec[k]||0)+1; });
   kc('ch-eng');
   CH['ch-eng'] = new Chart(document.getElementById('ch-eng'), {
     type: 'bar',
@@ -823,7 +836,7 @@ function renderCharts() {
 
   // Avg closure duration per engineer (hours between ts and closing)
   const dm = {};
-  tickets.filter(t => t.status==='Closed' && t.closing && t.assigned && t.ts).forEach(t => {
+  chartTickets.filter(t => t.status==='Closed' && t.closing && t.assigned && t.ts).forEach(t => {
     const created = new Date(t.ts).getTime();
     const closed  = new Date(t.closing).getTime();
     const hrs = isNaN(created)||isNaN(closed) ? 0 : Math.round((closed-created)/36000)/100;
@@ -840,7 +853,7 @@ function renderCharts() {
 
   // Timeline — tickets per month
   const tl = {};
-  tickets.forEach(t => {
+  chartTickets.forEach(t => {
     const d = new Date(t.ts);
     if (isNaN(d)) return;
     const k = d.toLocaleString('default',{ month:'short', year:'2-digit' });
