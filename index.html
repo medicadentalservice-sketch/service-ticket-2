@@ -145,7 +145,7 @@
   .fi:focus,.fsel:focus,.fta:focus{border-color:var(--accent);}
   .fsel option{background:var(--surface2);}
   .fta{resize:vertical;min-height:80px;}
-  .spare-section{display:none;}
+  /* spare-section display controlled via inline style in JS */
   .form-actions{display:flex;gap:12px;margin-top:32px;}
   .btn-p{background:var(--accent);color:var(--bg);border:none;border-radius:10px;padding:13px 28px;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;cursor:pointer;transition:all .2s;}
   .btn-p:hover{opacity:.85;}
@@ -289,7 +289,7 @@
           <div class="fg"><label class="flabel">Mobile Number</label><input class="fi" id="f-phone" placeholder="+966..."></div>
           <div class="fg">
             <label class="flabel">Ticket Type</label>
-            <select class="fsel" id="f-type" onchange="toggleSpareAdd()">
+            <select class="fsel" id="f-type">
               <option value="">— Select —</option>
               <option value="Equipment / Dental Unit">Equipment / Dental Unit</option>
               <option value="Computer / System (IT)">Computer / System (IT)</option>
@@ -307,9 +307,9 @@
             </select>
           </div>
           <div class="fg full"><label class="flabel">Problem Description</label><textarea class="fta" id="f-desc" placeholder="Describe the issue..."></textarea></div>
-          <div class="fg full spare-section" id="f-spare-section">
-            <label class="flabel">What spare part is needed?</label>
-            <input class="fi" id="f-spare" placeholder="Describe the spare part needed">
+          <div class="fg full" id="f-spare-section" style="display:none;">
+            <label class="flabel" style="color:var(--cwait);">What spare part is needed?</label>
+            <input class="fi" id="f-spare" placeholder="Enter the name of the spare part needed..." style="border-color:var(--cwait);">
           </div>
         </div>
         <div class="form-actions">
@@ -742,7 +742,14 @@ async function confirmDelete() {
 // ════════════════════════════════════════════════════════════════
 function toggleSpareAdd() {
   const status = document.getElementById('f-status').value;
-  document.getElementById('f-spare-section').style.display = status === 'Waiting for Spare Parts' ? '' : 'none';
+  const sec = document.getElementById('f-spare-section');
+  if (status === 'Waiting for Spare Parts') {
+    sec.style.display = '';
+    document.getElementById('f-spare').focus();
+  } else {
+    sec.style.display = 'none';
+    document.getElementById('f-spare').value = '';
+  }
 }
 
 let _submitting = false;
